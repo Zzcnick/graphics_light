@@ -17,6 +17,14 @@ public class Canvas {
     private int framecount = 1;
     private String basename = "out";
 
+    private HashMap<String, double[]> constants = 
+	new HashMap<String, double[]>(); // Constant Colors
+    private HashMap<String, double[]> lightdirs =
+	new HashMap<String, double[]>(); // Lights and Directions
+    private HashMap<String, int[]> lightcolors =
+	new HashMap<String, int[]>(); // Lights and Colors
+    private int[] ambient = new int[]{0,0,0}; // Ambient Lighting
+
     // Constructors
     public Canvas() {
 	canvas = new Pixel[500][500];
@@ -61,6 +69,65 @@ public class Canvas {
     public Canvas(int x, int y, int R, int G, int B, int md) {
 	this(x, y, R, G, B);
 	mode = md;
+    }
+
+    // Lighting and Shading
+    public void setAmbience(int r, int g, int b) {
+	ambient[0] = r;
+	ambient[1] = g;
+	ambient[2] = b;
+    }
+    public void addLight(String name, double x, double y, double z, int r, int g, int b) {
+	double[] ldir = new double[]{x,y,z};
+	int[] lcol = new int[]{r,g,b};
+	lightdirs.put(name, ldir);
+	lightcolors.put(name, lcol);
+    }
+    public void addConstant(String name,
+			    double ra, double rd, double rs,
+			    double ga, double gd, double gs, 
+			    double ba, double bd, double bs) {
+	constants.put(name, new double[]{ra, rd, rs, ga, gd, gs, ba, bd, bs});
+    }
+
+    public Pixel calculateColor(String constant, Vector V) {
+	double R = 0; double G = 0; double B = 0;
+	double[] fields = constants.get(constant);
+
+	// Ambient Shading
+	R += fields[0] * ambient[0];
+	G += fields[3] * ambient[1];
+	B += fields[6] * ambient[2];
+
+	Set<String> lights = lightdirs.keySet();
+	for (String l : lights) {
+	    Vector L = new Vector(lightdirs.get(l)[0],
+				  lightdirs.get(l)[1],
+				  lightdirs.get(l)[2]);
+	    L.normalize(); // Light Direction
+	    V.normalize(); // Surface Normal
+
+	    // Diffuse Shading
+	    double dLV = L.dot(V);
+	    R += fields[1] * lightcolors.get(l)[0] * dLV;
+	    G += fields[4] * lightcolors.get(l)[1] * dLV;
+	    B += fields[7] * lightcolors.get(l)[2] * dLV;
+
+	    // Specular Shading
+	    Vector VIEW = new Vector(1,1,1); // View Vector
+	    VIEW.normalize();
+	    double sLV = Math.pow(((V.scale(dLV * 2)).subtract(L)).dot(VIEW),2);
+	    R += fields[2] * lightcolors.get(l)[0] * sLV;
+	    G += fields[5] * lightcolors.get(l)[1] * sLV;
+	    B += fields[8] * lightcolors.get(l)[2] * sLV;
+	}
+
+	// Checking 
+	if (R > 255) R = 255;
+	if (G > 255) G = 255;
+	if (B > 255) B = 255;
+	// return new Pixel(255, 0, 0); // Debugging
+	return new Pixel(R, G, B); 
     }
 
     // Animation
@@ -248,6 +315,15 @@ public class Canvas {
 	draw(3);
 	return true;
     }
+    public boolean box(String constant,
+		       double x, double y, double z, 
+		       double dx, double dy, double dz) {
+	Matrix em = box_edges(x,y,z,dx,dy,dz);
+	edges.append(em);
+	apply();
+	draw(3,constant);
+	return true;
+    }
     public boolean box(double x, double y, double z, 
 		       double dx, double dy, double dz) {
 	return box(x, y, z, dx, dy, dz, defaultColor);
@@ -304,6 +380,13 @@ public class Canvas {
 	draw(3);
 	return true;
     }
+    public boolean sphere(String constant, double cx, double cy, double cz, double r) {
+	Matrix em = sphere_edges(cx,cy,cz,r);
+	edges.append(em);
+	apply();
+	draw(3, constant);
+	return true;
+    }
     public boolean sphere(double cx, double cy, double cz, double r) {
 	return sphere(cx, cy, cz, r, defaultColor);
     }
@@ -311,7 +394,7 @@ public class Canvas {
 	Matrix em = new Matrix();
 	double s; // Semicircle
 	double t; // Rotation
-	int n = 20; // Steps
+	int n = 30; // Steps
 	double ds = Math.PI / n; // Semicircle Step
 	double dt = ds; // Rotation Step
 	double x, y, z;
@@ -373,6 +456,13 @@ public class Canvas {
 	draw(3);
 	return true;
     }
+    public boolean torus(String constant, double cx, double cy, double cz, double r, double R) {
+	Matrix em = torus_edges(cx,cy,cz,r,R);
+	edges.append(em);
+	apply();
+	draw(3, constant);
+	return true;
+    }
     public boolean torus(double cx, double cy, double cz, double r, double R) {
 	return torus(cx, cy, cz, r, R, defaultColor);
     }
@@ -380,7 +470,7 @@ public class Canvas {
 	Matrix em = new Matrix();
 	double s; // Circle
 	double t; // Rotation
-	int n = 3; // Steps / 2
+	int n = 20; // Steps / 2
 	double ds = Math.PI / n; // Circle Step
 	double dt = ds / 2; // Rotation Step
 	double x, y, z;
@@ -555,14 +645,17 @@ public class Canvas {
     }
 
     public boolean draw() {
-	return draw(mode);
+	return draw(mode, null);
     }
     public boolean draw(int md) {
+	return draw(md, null);
+    }
+    public boolean draw(int md, String constant) {
 	Iterator<double[]> edgelist = edges.iterator();
 	Iterator<Pixel> colors = edges.colorIterator();
 	double[] p1, p2;
 	double x1, x2, y1, y2;
-	Pixel p = new Pixel(0,0,0);
+	Pixel p = new Pixel(0,0,0); 
 	if (md == 2) {
 	    while (edgelist.hasNext()) {
 		p1 = edgelist.next();
@@ -591,7 +684,15 @@ public class Canvas {
 		p = colors.next();
 		double dx1 = x2 - x1; double dx2 = x3 - x2;
 		double dy1 = y2 - y1; double dy2 = y3 - y2; 
-		// double dz1 = z2 - z1; double dz2 = z3 - z2; // Not Needed
+		if (constant != null && constants.containsKey(constant)) {
+		    double z1, z2, z3;
+		    z1 = p1[2]; z2 = p2[2]; z3 = p3[2];
+		    double dz1 = z2 - z1; double dz2 = z3 - z2;
+		    Vector V = new Vector(dy1 * dz2 - dz1 * dy2,
+					  dz1 * dx2 - dx1 * dz2,
+					  dx1 * dy2 - dy1 * dx2); // Vector For Shading
+		    p = calculateColor(constant, V);
+		} 
 		if (dx1 * dy2 - dy1 * dx2 > 0) { // Cross Product Z is Positive (Facing Us)
 		    /* // Line Mesh 
 		       line((int)x1, (int)y1, (int)x2, (int)y2, p);

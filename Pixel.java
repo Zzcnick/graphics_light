@@ -21,6 +21,11 @@ public class Pixel {
 	this.G = G;
 	this.B = B;
     }
+    public Pixel(double R, double G, double B) {
+	this.R = (int)R;
+	this.G = (int)G;
+	this.B = (int)B;
+    }
     public Pixel(int R, int G, int B, double Z) {
 	this(R,G,B);
 	this.Z = Z;

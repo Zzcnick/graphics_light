@@ -1,16 +1,45 @@
 ambient 255 255 255
-light l1 1 1 1 110 110 110
-light l2 -1 1 1 110 110 110
-light l3 1 -1 1 110 110 110
-light l4 -1 -1 1 110 110 110
-constants white 0.15 0.75 0.1 0.15 0.75 0.1 0.15 0.75 0.1
-constants grey 0.1 0.4 0.5 0.1 0.4 0.5 0.1 0.4 0.5
+light l1 0 1 1 255 0 255
+light l2 1 1 0 0 255 255
+light l3 1 0 1 255 255 0
+constants white 0.25 0.5 0.25 0.25 0.5 0.25 0.25 0.5 0.25
 
-frames 10
-basename test
+frames 120
+basename lighting
 
 push
+fill 10 10 10
 move 250 250 0
-rotate y 360 rotator
-vary rotator 0 9 0 1
-box -100 125 50 200 250 100
+
+push
+rotate y 360 spiny
+rotate x 360 spinx
+rotate z 360 spinz
+
+push
+color 255 255 0
+rotate z 360 s1 
+move -175 0 0
+sphere white 0 0 0 50
+pop
+
+push
+color 255 0 255
+rotate z 360 s2
+move -175 0 0
+box white -50 50 50 100 100 100
+pop
+
+push
+color 0 255 255
+rotate z 360 s3
+move -175 0 0
+torus white 0 0 0 20 30
+pop
+
+vary spinx 0 119 0 1
+vary spiny 0 119 0 2
+vary spiny 0 119 0 3
+vary s1 0 119 0 1
+vary s2 0 119 0.33 1.33
+vary s3 0 119 0.66 1.66

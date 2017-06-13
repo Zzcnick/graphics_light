@@ -211,15 +211,32 @@ public class Picture {
 		    c.box(nextDouble(buffer), nextDouble(buffer),
 			  nextDouble(buffer), nextDouble(buffer),
 			  nextDouble(buffer), nextDouble(buffer));
+		else if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM, NUM})) {
+		    c.box(nextString(buffer),
+			  nextDouble(buffer), nextDouble(buffer),
+			  nextDouble(buffer), nextDouble(buffer),
+			  nextDouble(buffer), nextDouble(buffer));
+		}
 	    } else if (cmd.equals("sphere")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM}))
 		    c.sphere(nextDouble(buffer), nextDouble(buffer), 
 			     nextDouble(buffer), nextDouble(buffer));
+		else if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM})) {
+		    c.sphere(nextString(buffer),
+			     nextDouble(buffer), nextDouble(buffer), 
+			     nextDouble(buffer), nextDouble(buffer));		    
+		}
 	    } else if (cmd.equals("torus")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM, NUM, NUM}))
 		    c.torus(nextDouble(buffer), nextDouble(buffer),
 			    nextDouble(buffer), nextDouble(buffer),
 			    nextDouble(buffer));
+		else if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM})) {
+		    c.torus(nextString(buffer),
+			    nextDouble(buffer), nextDouble(buffer),
+			    nextDouble(buffer), nextDouble(buffer),
+			    nextDouble(buffer));
+		}
 	    } else if (cmd.equals("color")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
 		    c.setDefaultColor(new Pixel(nextInt(buffer), 
@@ -359,13 +376,21 @@ public class Picture {
 	    boolean executed = false;
 	    if (cmd.equals("light")) {
 		if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM, NUM}))
-		    System.out.println("Lighting");
+		    c.addLight(nextString(buffer), 
+			       nextDouble(buffer), nextDouble(buffer), nextDouble(buffer),
+			       nextInt(buffer), nextInt(buffer), nextInt(buffer));
+		System.out.println("Light added"); // Debugging
 	    } else if (cmd.equals("constants")) {
 		if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM}))
-		    System.out.println("Constants");
+		    c.addConstant(nextString(buffer),
+				  nextDouble(buffer), nextDouble(buffer), nextDouble(buffer),
+				  nextDouble(buffer), nextDouble(buffer), nextDouble(buffer),
+				  nextDouble(buffer), nextDouble(buffer), nextDouble(buffer));
+		System.out.println("Constant added");
 	    } else if (cmd.equals("ambient")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
-		    System.out.println("Ambient");
+		    c.setAmbience(nextInt(buffer), nextInt(buffer), nextInt(buffer));
+		System.out.println("Ambience set"); // Debugging
 	    }
 	    buffer.clear();
 	    typebuffer.clear();
