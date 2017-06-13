@@ -88,7 +88,30 @@ public class Picture {
 		    }
 		}
 	    }
-
+	    
+	    // Pass 2.1 - Parsing Colors and Constants
+	    br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
+	    StreamTokenizer st21 = new StreamTokenizer(br);
+	    st21.slashSlashComments(true);
+	    st21.eolIsSignificant(true);
+	    while ((token = st21.nextToken()) != -1) {
+		if (token == NUM) {
+		    // System.out.println(st21.nval); // Debugging
+		    buffer.offer(st21.nval);
+		    typebuffer.offer(token);
+		} else if (token == STR) {
+		    // System.out.println(st21.sval); // Debugging 
+		    buffer.offer(st21.sval);
+		    typebuffer.offer(token);
+		} else if (token == EOL) {
+		    // System.out.println("END OF LINE: EXECUTE COMMAND\n"); // Debugging
+		    // System.out.println("COMMAND: " + buffer); // Debugging
+		    // System.out.println("TYPES  : " + typebuffer); // Debugging
+		    executeLight(c, buffer, typebuffer);
+		} else break; // Should Not Happen, Failsafe
+	    }
+	    executeLight(c, buffer, typebuffer); // EOF 
+	    
 	    // Pass 3 - Drawing
 	    for (int curframe = 0; curframe < framecount; curframe++) {
 		br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(f))));
@@ -125,20 +148,6 @@ public class Picture {
 	} // End Parser
 	else {
 	    // Testing Space
-	    Canvas c = new Canvas();
-	    Matrix em = c.getEdges();
-
-	    em.add_triangle(100,150,100,
-			    150,100,500,
-			    200,150,100);
-	    em.add_triangle(100,100,100,
-			    200,100,100,
-			    150,150,500);
-	    System.out.println(em);
-	    c.draw(3);
-	    c.save("tri.ppm");
-	    c.savez("triz.ppm");
-	    System.out.println("Execution complete.");
 	}
 	return;
     }
@@ -308,11 +317,56 @@ public class Picture {
 	    } else if (cmd.equals("fill")) {
 		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
 		    c.fill(nextInt(buffer), nextInt(buffer), nextInt(buffer));
+	    } else if (cmd.equals("light")) {
+		if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM, NUM}))
+		    ; // Nothing // System.out.println("Lighting");
+	    } else if (cmd.equals("constants")) {
+		if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM}))
+		    ; // Nothing // System.out.println("Constants");
+	    } else if (cmd.equals("ambient")) {
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
+		    ; // Nothing // System.out.println("Ambient");
 	    }
 	    
 	    // Check if Command Executed
 	    if (!executed)    
 		System.out.println("ERROR: " + buffer + " does not match any implementation of " + cmd);
+	    buffer.clear();
+	    typebuffer.clear();
+	}
+    }
+
+    public static void executeLight(Canvas c,
+				    ArrayDeque<Object> buffer,
+				    ArrayDeque<Integer> typebuffer
+				    )
+	throws FileNotFoundException {
+	String cmd = "";
+	if (!typebuffer.isEmpty()) {
+	    // Commands 
+	    if (typebuffer.poll() != STR) { 
+		return;
+	    } else {
+		cmd = nextString(buffer);
+	    }
+	    int pad = 12;
+	    String cmdpad = cmd;
+	    while (cmdpad.length() < pad)
+		cmdpad += " ";
+	    if (c.getFramecount() == 1)
+		System.out.println("Executing Command: " + cmdpad + "| Inputs: " + buffer); // Debugging - Keep On
+	    
+	    boolean executed = false;
+	    if (cmd.equals("light")) {
+		if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM, NUM}))
+		    System.out.println("Lighting");
+	    } else if (cmd.equals("constants")) {
+		if (executed = typecheck(typebuffer, new int[]{STR, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM, NUM}))
+		    System.out.println("Constants");
+	    } else if (cmd.equals("ambient")) {
+		if (executed = typecheck(typebuffer, new int[]{NUM, NUM, NUM}))
+		    System.out.println("Ambient");
+	    }
 	    buffer.clear();
 	    typebuffer.clear();
 	}
